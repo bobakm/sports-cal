@@ -21,10 +21,29 @@ export const fixtureKey = (f: Fixture) => `${f.competition}-${f.id}`;
 export const RANKED_CUTOFF = 25;
 const RANKING_APPLIES = new Set(['college-football']);
 
+/** Opponents that make an ordinary league fixture a big game. Hand-maintained
+ *  on purpose: there's no ranking field that works here — ESPN's curatedRank is
+ *  league position for soccer, so any numeric cutoff flags the whole division.
+ *  Matched as a substring against ESPN's short display name. Edit freely. */
+export const MARQUEE_OPPONENTS = [
+  // England
+  'Man City', 'Manchester City', 'Man United', 'Manchester United', 'Liverpool',
+  'Arsenal', 'Chelsea', 'Tottenham', 'Newcastle',
+  // Europe
+  'Real Madrid', 'Barcelona', 'Bayern', 'Paris Saint-Germain', 'PSG',
+  'Inter', 'Milan', 'Juventus', 'Atletico', 'Atlético', 'Dortmund',
+  // National-team heavyweights
+  'Brazil', 'Argentina', 'France', 'Spain', 'Germany', 'Portugal',
+];
+
+const isMarqueeOpponent = (opponent: string) =>
+  MARQUEE_OPPONENTS.some(o => opponent.toLowerCase().includes(o.toLowerCase()));
+
 export function tierFor(f: Fixture, headToHead: Set<string>): Tier {
   if (headToHead.has(fixtureKey(f))) return 1;            // two teams you follow
   if (!REGULAR_SEASON.has(f.competition) && !FRIENDLIES.has(f.competition)) return 2;
   if (RANKING_APPLIES.has(f.competition) && f.opponentRank && f.opponentRank <= RANKED_CUTOFF) return 2;
+  if (isMarqueeOpponent(f.opponent)) return 2;
   return 3;
 }
 
