@@ -66,7 +66,7 @@ export function findClusters(
 
     // Marquee: cups, knockouts, tournaments, ranked college matchups.
     const marquee = sorted.filter(e => e.tier === 2);
-    if (marquee.length && !h2h.length) {
+    if (marquee.length && !h2hByFixture.size) {
       out.push({ day, kind: 'marquee',
                  summary: `⭐ ${[...new Set(marquee.map(line))].slice(0, 3).join(', ')}`,
                  description: sorted.map(line).join('\n') });
