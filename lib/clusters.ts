@@ -1,6 +1,6 @@
 import type { Fixture } from './espn.ts';
 import type { Team } from './teams.ts';
-import { tierFor, type Tier } from './tiers.ts';
+import { tierFor, fixtureKey, type Tier } from './tiers.ts';
 
 /** "Same day" is ambiguous for a 20:00 ET game or an 11:00 UTC European one.
  *  All day-bucketing happens in this zone regardless of where the subscriber
@@ -46,10 +46,21 @@ export function findClusters(
       `${e.team.short} ${e.fixture.homeAway === 'away' ? '@' : 'v'} ${e.fixture.opponent}`;
 
     // Two teams you follow, playing each other.
-    const h2h = sorted.filter(e => e.tier === 1);
-    if (h2h.length) {
-      out.push({ day, kind: 'head-to-head',
-                 summary: `🔥 ${[...new Set(h2h.map(line))].join(', ')}`,
+    // One line per FIXTURE, not per team — a head-to-head game appears under
+    // both teams and would otherwise read "PHI @ Cardinals, STL v Phillies".
+    const h2hByFixture = new Map<string, Entry[]>();
+    for (const e of sorted.filter(e => e.tier === 1)) {
+      const k = fixtureKey(e.fixture);
+      if (!h2hByFixture.has(k)) h2hByFixture.set(k, []);
+      h2hByFixture.get(k)!.push(e);
+    }
+    if (h2hByFixture.size) {
+      const names = [...h2hByFixture.values()].map(pair => {
+        const home = pair.find(e => e.fixture.homeAway === 'home');
+        const away = pair.find(e => e.fixture.homeAway === 'away');
+        return home && away ? `${away.team.short} @ ${home.team.short}` : line(pair[0]);
+      });
+      out.push({ day, kind: 'head-to-head', summary: `🔥 ${names.join(', ')}`,
                  description: sorted.map(line).join('\n') });
     }
 
