@@ -186,6 +186,7 @@ ${teamRows}
     <p><b>Google Calendar:</b> add it once from a computer. The Google Calendar phone app can't add subscriptions at all, on any phone — that's a Google limitation, not a broken link. Once added, it syncs to your phone by itself.</p>
     <p><b>Apple Calendar (the built-in one):</b> tap “Apple Calendar” and confirm. That's the whole thing, and it works right on the phone.</p>
     <p><b>Outlook, Fantastical, anything else:</b> hit “Copy”, then paste it into your app's “subscribe from URL” option. Don't use “import” — that makes a dead copy that never updates.</p>
+    <p><b>“Validation failed” or “invalid URL”:</b> make sure the address starts with <b>https://</b>. Some apps turn the Apple Calendar link into plain <code>http://</code> and then refuse to follow the redirect to the secure version. Hit “Copy”, which always gives you the <code>https://</code> form, and paste that instead.</p>
     <p><b>Nothing showed up yet:</b> new subscriptions take a few minutes to fill in.</p>
     <p><b>A game time looks wrong:</b> Apple re-checks every few hours, Google can take considerably longer, and there's no way to hurry either. Times are always shown in your own timezone.</p>
     <p><b>Where did they go?</b> These arrive under “Subscriptions” on Apple and “Other calendars” on Google, not with your personal calendars.</p>
