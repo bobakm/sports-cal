@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsx scripts/build.ts",
+    "build": "tsx scripts/build.ts && tsx scripts/validate.ts",
     "serve": "tsx scripts/serve.ts",
     "gen": "tsx scripts/gen.ts",
     "qr": "tsx scripts/qr.ts",
-    "probe": "python3 probe/espn_probe.py"
+    "probe": "python3 probe/espn_probe.py",
+    "validate": "tsx scripts/validate.ts"
   },
   "dependencies": {
     "@types/qrcode": "^1.5.6",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "ical.js": "^2.2.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

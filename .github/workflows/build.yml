@@ -26,9 +26,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Exits non-zero if too few teams returned fixtures, which fails the job
-      # and leaves the previous deployment serving rather than publishing
-      # near-empty feeds that would wipe subscribers' calendars.
+      # Two guards, both of which fail the job and leave the previous
+      # deployment serving rather than publishing something broken:
+      #  - too few teams returned fixtures (near-empty feeds would make
+      #    subscribers' calendars delete events they already have)
+      #  - any feed fails RFC 5545 validation (a malformed feed is rejected
+      #    outright by calendar apps, with no useful error for the subscriber)
       - run: npm run build
         env:
           SITE_BASE: ${{ vars.SITE_BASE || 'bobakm.github.io/sports-cal' }}
