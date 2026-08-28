@@ -33,8 +33,12 @@ const NCAAF = (slug: string, name: string, short: string, id: string): Team => (
 });
 
 /** EPL sides also play European nights, which the eng.1 endpoint doesn't
- *  return — those are exactly the fixtures worth having. */
-const EURO = ['uefa.champions', 'uefa.europa'];
+ *  return — those are exactly the fixtures worth having. Every club queries
+ *  every European competition: whichever one they actually qualified for
+ *  returns fixtures and the rest return nothing, so promotion, relegation and
+ *  qualification changes need no edits here. (ESPN's Conference League slug is
+ *  'uefa.europa.conf'; 'uefa.conference' 404s.) */
+const EURO = ['uefa.champions', 'uefa.europa', 'uefa.europa.conf'];
 const EPL = (slug: string, name: string, short: string, id: string): Team => ({
   slug, name, short, category: 'EPL', durationMin: 120,
   defaultBroadcast: 'NBC / USA / Peacock',
