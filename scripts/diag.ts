@@ -24,8 +24,10 @@ for (const lg of ['uefa.champions', 'uefa.europa', 'uefa.conference']) {
   console.log(`  scoreboard events: ${(sb?.events ?? []).length}`);
 }
 
-for (const lg of ['uefa.champions', 'uefa.europa']) {
-  const a = await g(`${B}/${lg}/teams/360/schedule`);
-  const b = await g(`${B}/${lg}/teams/360/schedule?fixture=true`);
-  console.log(`${lg} team 360: past=${(a?.events ?? []).length} upcoming=${(b?.events ?? []).length}`);
+for (const [name, id] of [['Arsenal', '359'], ['Liverpool', '364'], ['Tottenham', '367'], ['ManUtd', '360']]) {
+  const a = await g(`${B}/uefa.champions/teams/${id}/schedule`);
+  const b = await g(`${B}/uefa.champions/teams/${id}/schedule?fixture=true`);
+  const evs = [...(a?.events ?? []), ...(b?.events ?? [])];
+  console.log(`uefa.champions ${name} (${id}): past=${(a?.events ?? []).length} upcoming=${(b?.events ?? []).length}`
+    + (evs.length ? ` | first=${evs[0].date} ${evs[0].name}` : ''));
 }
