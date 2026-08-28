@@ -20,6 +20,21 @@ const DAY = new Intl.DateTimeFormat('en-CA', {
 export const dayKey = (d: Date): string => DAY.format(d);
 
 export type Cluster = { day: string; summary: string; description: string };
+
+/** How many distinct teams play on each day — used to pick a threshold that
+ *  actually makes BBQ Day rare. */
+export function dayHistogram(byTeam: Map<string, Fixture[]>): Map<number, number> {
+  const days = new Map<string, Set<string>>();
+  for (const [slug, fixtures] of byTeam)
+    for (const f of fixtures) {
+      const k = dayKey(f.start);
+      if (!days.has(k)) days.set(k, new Set());
+      days.get(k)!.add(slug);
+    }
+  const hist = new Map<number, number>();
+  for (const teams of days.values()) hist.set(teams.size, (hist.get(teams.size) ?? 0) + 1);
+  return new Map([...hist].sort((a, b) => a[0] - b[0]));
+}
 type Entry = { team: Team; fixture: Fixture; tier: Tier };
 
 export function findClusters(

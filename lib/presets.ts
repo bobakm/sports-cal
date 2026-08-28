@@ -17,5 +17,11 @@ export const PRESETS: Preset[] = [
   { slug: 'national',   name: `${ICON.NATIONAL} National Teams`, teams: inCategory('NATIONAL') },
 ];
 
+/** Sparse "only when two of your teams meet" variants of each bundle. */
+export const H2H_PREFIX = 'h2h';
+export const h2hSlug = (p: Preset) => p.slug === 'everything' ? 'h2h' : `h2h-${p.slug}`;
+export const h2hName = (p: Preset) =>
+  p.slug === 'everything' ? '🔥 Head to Head' : `🔥 ${p.name.replace(/^\S+\s/, '')} H2H`;
+
 export const teamsFor = (p: Preset): Team[] =>
   p.teams.map(s => TEAMS.find(t => t.slug === s)).filter((t): t is Team => !!t);

@@ -2,11 +2,11 @@
 // Run by GitHub Actions on a schedule; nothing runs at request time.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { TEAMS, type Team } from '../lib/teams.ts';
-import { PRESETS, teamsFor } from '../lib/presets.ts';
+import { PRESETS, teamsFor, h2hSlug, h2hName } from '../lib/presets.ts';
 import { fetchTeamFixtures, type Fixture } from '../lib/espn.ts';
 import { buildFeed, buildBundle, buildAlerts } from '../lib/ics.ts';
 import { findHeadToHead } from '../lib/tiers.ts';
-import { findClusters } from '../lib/clusters.ts';
+import { findClusters, dayHistogram } from '../lib/clusters.ts';
 import { renderIndex } from '../lib/page.ts';
 
 // host + path, no scheme — we prefix webcal:// or https:// as needed
@@ -64,7 +64,20 @@ for (const preset of PRESETS) {
   const ics = buildBundle(preset.name, entries, headToHead);
   bundleCounts.set(preset.slug, (ics.match(/BEGIN:VEVENT/g) ?? []).length);
   write(`feed/${preset.slug}.ics`, ics);
+
+  // Sparse variant: only fixtures where two tracked teams meet.
+  const h2hEntries = entries
+    .map(e => ({ team: e.team, fixtures: e.fixtures.filter(f => headToHead.has(`${f.competition}-${f.id}`)) }))
+    .filter(e => e.fixtures.length);
+  if (h2hEntries.length) {
+    const h = buildBundle(h2hName(preset), h2hEntries, headToHead);
+    bundleCounts.set(h2hSlug(preset), (h.match(/BEGIN:VEVENT/g) ?? []).length);
+    write(`feed/${h2hSlug(preset)}.ics`, h);
+  }
 }
+
+console.log('\nteams playing per day:');
+for (const [n, days] of dayHistogram(fixtures)) console.log(`  ${n} teams: ${days} days`);
 
 const clusters = findClusters(fixtures, TEAMS, headToHead);
 write('feed/alerts.ics', buildAlerts(clusters));
