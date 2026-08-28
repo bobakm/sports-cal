@@ -14,7 +14,7 @@ function row(site: string, slug: string, label: string, sub: string): string {
           <div class="acts">
             <a class="btn primary" href="${esc(`webcal://${site}/feed/${slug}.ics`)}">Apple Calendar</a>
             <a class="btn" href="${esc(googleUrl(https))}" target="_blank" rel="noopener">Google Calendar</a>
-            <button class="btn copy" data-url="${esc(https)}">Copy</button>
+            <button class="btn copy" data-url="${esc(https)}">Other app</button>
           </div>
         </div>`;
 }
@@ -97,6 +97,7 @@ export function renderIndex(
   .inapp { background:var(--warnbg); border:1px solid var(--warnline); color:var(--warn);
            border-radius:9px; padding:.75rem .9rem; font-size:.9rem; margin:0 0 1.5rem; }
   .inapp b { color:var(--warn); }
+  .urlnote { font-size:.8rem; color:var(--dim); margin-top:.5rem; }
   .urlbox { width:100%; margin-top:.5rem; font:inherit; font-size:.8rem; padding:.4rem .5rem;
             border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); }
   .key { border:1px solid var(--line); border-radius:12px; padding:1rem 1.15rem; margin:0 0 1.75rem; }
@@ -123,7 +124,10 @@ export function renderIndex(
   <h1>Sports Calendar</h1>
   <p class="lede">Tap once and the games show up in your own calendar app — and keep updating themselves. You never have to come back here.</p>
 
-  <p class="pick"><b>Which button?</b> Go by the app you actually open, not the phone you own. If you use the <b>Google Calendar app on an iPhone</b>, you want <b>Google Calendar</b> — and you'll need a computer for it, just once.</p>
+  <p class="pick"><b>Which button?</b> Go by the app you actually open, not the phone you own.<br>
+  <b>Apple Calendar</b> — the calendar built into iPhone and Mac.<br>
+  <b>Google Calendar</b> — including on an iPhone. Needs a computer, once.<br>
+  <b>Other app</b> — Outlook, Fantastical, Samsung, anything else. Gives you a link to paste.</p>
 
   <p class="inapp" id="inapp"><b>Opened this from WhatsApp or Instagram?</b> Tap the <b>⋯</b> or <b>Share</b> icon and choose <b>Open in Safari</b> (or Chrome) first. Chat apps use a cut-down browser that silently blocks calendar subscriptions.</p>
 
@@ -204,22 +208,32 @@ ${teamRows}
   })();
 
   // Always leave a way to get the URL, even with no clipboard access.
-  function reveal(btn) {
-    if (btn.parentNode.querySelector('.urlbox')) return;
+  // Always show the https link as selectable text. Copying alone is invisible,
+  // and it's the https form that matters: apps that rewrite webcal:// to plain
+  // http:// hit a redirect some of them refuse to follow.
+  function reveal(btn, copied) {
+    var row = btn.closest('.row');
+    if (row.querySelector('.urlbox')) return;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'flex-basis:100%';
+    var note = document.createElement('div');
+    note.className = 'urlnote';
+    note.textContent = copied
+      ? 'Copied. Paste this into your app\u2019s \u201csubscribe from URL\u201d box \u2014 it must start with https://'
+      : 'Copy this into your app\u2019s \u201csubscribe from URL\u201d box \u2014 it must start with https://';
     var i = document.createElement('input');
     i.className = 'urlbox'; i.value = btn.dataset.url; i.readOnly = true;
-    btn.closest('.row').appendChild(i);
+    i.addEventListener('focus', function () { i.select(); });
+    wrap.appendChild(note); wrap.appendChild(i);
+    row.appendChild(wrap);
     i.focus(); i.select();
   }
   document.querySelectorAll('.copy').forEach(function (b) {
     b.addEventListener('click', function () {
-      var done = function () {
-        var t = b.textContent; b.textContent = 'Copied'; b.classList.add('primary');
-        setTimeout(function () { b.textContent = t; b.classList.remove('primary'); }, 1200);
-      };
       try {
-        navigator.clipboard.writeText(b.dataset.url).then(done, function () { reveal(b); });
-      } catch (e) { reveal(b); }
+        navigator.clipboard.writeText(b.dataset.url)
+          .then(function () { reveal(b, true); }, function () { reveal(b, false); });
+      } catch (e) { reveal(b, false); }
     });
   });
 </script>
