@@ -10,6 +10,11 @@ const TTL = 60 * 60 * 6;   // REFRESH-INTERVAL / X-PUBLISHED-TTL hint
 const cal = (name: string, description: string) =>
   ical({ name, description, prodId: PRODID, ttl: TTL, method: ICalCalendarMethod.PUBLISH });
 
+/** RFC 5545 requires the content to end with CRLF after END:VCALENDAR.
+ *  ical-generator omits it, and strict parsers — including some calendar apps'
+ *  URL validators — reject the feed outright because of it. */
+const finish = (ics: string): string => ics.endsWith('\r\n') ? ics : ics + '\r\n';
+
 /** Titles get read in a crowded month view where ~20 characters survive, so the
  *  tracked team and any flag go first and the detail goes in the description. */
 function summaryFor(team: Team, f: Fixture, headToHead: Set<string>): string {
@@ -48,7 +53,7 @@ export function buildFeed(team: Team, fixtures: Fixture[], headToHead: Set<strin
     // Deterministic: the same game always yields the same UID, so a refresh
     // updates the existing event rather than adding a second copy.
     addEvent(c, team, f, headToHead, `${team.slug}-${fixtureKey(f)}@sports-calendar`);
-  return c.toString();
+  return finish(c.toString());
 }
 
 /** Combined feed. Deduped by fixture key: a game between two teams you follow
@@ -65,7 +70,7 @@ export function buildBundle(
       seen.add(key);
       addEvent(c, team, f, headToHead, `${key}@sports-calendar`);
     }
-  return c.toString();
+  return finish(c.toString());
 }
 
 /** All-day markers for cluster days. These are true DATE-valued events, not
@@ -82,10 +87,10 @@ export function buildAlerts(clusters: Cluster[], name: string, desc: string): st
       description: cl.description,
     });
   }
-  return c.toString();
+  return finish(c.toString());
 }
 
 /** Valid, empty-but-titled feed for an unknown slug — never a raw error,
  *  because a calendar client retries a broken URL forever. */
 export const emptyFeed = (slug: string): string =>
-  ical({ name: `Unknown team (${slug})`, prodId: PRODID }).toString();
+  finish(ical({ name: `Unknown team (${slug})`, prodId: PRODID }).toString());
