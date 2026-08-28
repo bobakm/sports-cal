@@ -8,7 +8,7 @@ import { buildFeed, buildBundle } from '../lib/ics.ts';
 import { renderIndex } from '../lib/page.ts';
 
 // host + path, no scheme — we prefix webcal:// or https:// as needed
-const SITE = process.env.SITE_BASE ?? 'bobakm.github.io/sports-calendar';
+const SITE = process.env.SITE_BASE ?? 'bobakm.github.io/sports-cal';
 
 mkdirSync('site/feed', { recursive: true });
 

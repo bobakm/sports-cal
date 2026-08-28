@@ -31,7 +31,7 @@ jobs:
       # near-empty feeds that would wipe subscribers' calendars.
       - run: npm run build
         env:
-          SITE_BASE: ${{ vars.SITE_BASE || 'bobakm.github.io/sports-calendar' }}
+          SITE_BASE: ${{ vars.SITE_BASE || 'bobakm.github.io/sports-cal' }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

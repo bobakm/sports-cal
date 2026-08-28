@@ -4,7 +4,7 @@ Subscribable calendar feeds for a specific set of teams, plus combined bundles.
 Static files regenerated every 6 hours by GitHub Actions and served from Pages —
 no server, no database, no accounts.
 
-**Subscribe page:** https://bobakm.github.io/sports-calendar
+**Subscribe page:** https://bobakm.github.io/sports-cal
 
 ## How it works
 
