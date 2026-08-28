@@ -12,8 +12,8 @@ function row(site: string, slug: string, label: string, sub: string): string {
   return `        <div class="row">
           <div class="who"><strong>${esc(label)}</strong><span>${esc(sub)}</span></div>
           <div class="acts">
-            <a class="btn primary" href="${esc(`webcal://${site}/feed/${slug}.ics`)}">Apple</a>
-            <a class="btn" href="${esc(googleUrl(https))}" target="_blank" rel="noopener">Google</a>
+            <a class="btn primary" href="${esc(`webcal://${site}/feed/${slug}.ics`)}">Apple Calendar</a>
+            <a class="btn" href="${esc(googleUrl(https))}" target="_blank" rel="noopener">Google Calendar</a>
             <button class="btn copy" data-url="${esc(https)}">Copy</button>
           </div>
         </div>`;
@@ -77,6 +77,9 @@ export function renderIndex(
          text-decoration:none; white-space:nowrap; }
   .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
   .btn:hover { opacity:.85; }
+  .pick { background:var(--card); border:1px solid var(--line); border-radius:9px;
+          padding:.7rem .9rem; font-size:.9rem; color:var(--dim); margin:0 0 2rem; }
+  .pick b { color:var(--fg); }
   .warn { background:var(--warnbg); border:1px solid var(--warnline); color:var(--warn);
           border-radius:9px; padding:.75rem .9rem; font-size:.9rem; margin:1.75rem 0 0; }
   details { margin-top:2rem; border-top:1px solid var(--line); padding-top:1.1rem; }
@@ -89,6 +92,8 @@ export function renderIndex(
 <main>
   <h1>Sports Calendar</h1>
   <p class="lede">Tap once and the games show up in your own calendar app — and keep updating themselves. You never have to come back here.</p>
+
+  <p class="pick"><b>Which button?</b> Go by the app you actually open, not the phone you own. If you use the <b>Google Calendar app on an iPhone</b>, you want <b>Google Calendar</b> — and you'll need a computer for it, just once.</p>
 
   <div class="step">
     <h2><span class="num">1</span> Everything in one calendar</h2>
@@ -118,8 +123,9 @@ ${teamRows}
 
   <details>
     <summary>It's not working / help</summary>
-    <p><b>Google Calendar:</b> you have to add this once from a computer. The Google Calendar phone app can't add subscriptions at all — it's a Google limitation, not a broken link. Once added on a computer it syncs to your phone automatically.</p>
-    <p><b>iPhone, iPad, Mac:</b> tap “Apple” and confirm. That's the whole thing.</p>
+    <p><b>I have an iPhone but use the Google Calendar app:</b> use the Google Calendar button, from a computer. The Apple button puts games into iOS's built-in Calendar app, which the Google Calendar app can't see — they'd be on your phone but invisible to you.</p>
+    <p><b>Google Calendar:</b> add it once from a computer. The Google Calendar phone app can't add subscriptions at all, on any phone — that's a Google limitation, not a broken link. Once added, it syncs to your phone by itself.</p>
+    <p><b>Apple Calendar (the built-in one):</b> tap “Apple Calendar” and confirm. That's the whole thing, and it works right on the phone.</p>
     <p><b>Outlook, Fantastical, anything else:</b> hit “Copy”, then paste it into your app's “subscribe from URL” option. Don't use “import” — that makes a dead copy that never updates.</p>
     <p><b>Nothing showed up yet:</b> new subscriptions take a few minutes to fill in.</p>
     <p><b>A game time looks wrong:</b> Apple re-checks every few hours, Google can take considerably longer, and there's no way to hurry either. Times are always shown in your own timezone.</p>
