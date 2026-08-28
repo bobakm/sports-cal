@@ -86,6 +86,8 @@ export const TEAMS: Team[] = [
     ['fifa.friendly.w', 'fifa.wwc']),
   NATIONAL('iran',        'Iran National',        'IRN', '469',
     ['afc.asian.cup', 'fifa.friendly', 'fifa.worldq.afc', 'fifa.world']),
+  NATIONAL('morocco',     'Morocco National',     'MAR', '2869',
+    ['caf.nations', 'caf.nations_qual', 'fifa.friendly', 'fifa.worldq.caf', 'fifa.world']),
   NATIONAL('belgium',     'Belgium National',     'BEL', '459', UEFA_NAT),
   NATIONAL('england',     'England National',     'ENG', '448', UEFA_NAT),
   NATIONAL('italy',       'Italy National',       'ITA', '162', UEFA_NAT),

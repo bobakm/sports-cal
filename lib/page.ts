@@ -7,10 +7,11 @@ const esc = (s: string) =>
 const googleUrl = (https: string) =>
   `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(https)}`;
 
-function row(site: string, slug: string, label: string, sub: string): string {
+function row(site: string, slug: string, label: string, sub: string, detail = ''): string {
   const https = `https://${site}/feed/${slug}.ics`;
   return `        <div class="row">
-          <div class="who"><strong>${esc(label)}</strong><span>${esc(sub)}</span></div>
+          <div class="who"><strong>${esc(label)}</strong><span>${esc(sub)}</span>${
+            detail ? `<span class="members">${esc(detail)}</span>` : ''}</div>
           <div class="acts">
             <a class="btn primary" href="${esc(`webcal://${site}/feed/${slug}.ics`)}">Apple Calendar</a>
             <a class="btn" href="${esc(googleUrl(https))}" target="_blank" rel="noopener">Google Calendar</a>
@@ -43,9 +44,16 @@ export function renderIndex(
           `${live.length} teams · ${bundleGames(everything)} games`)
     : '';
 
+  // Spell out what's in each bundle so nobody has to cross-reference the list
+  // at the bottom of the page.
+  const byName = new Map(teams.map(t => [t.slug, t.name.replace(/ National/, '')]));
+  const members = (p: Preset) =>
+    p.teams.map(s => byName.get(s)).filter(Boolean).sort((a, b) => a!.localeCompare(b!)).join(', ');
+
   const groupRows = groups.map(p =>
     row(site, p.slug, p.name,
-        `${p.teams.length} team${p.teams.length === 1 ? '' : 's'} · ${bundleGames(p)} games`))
+        `${p.teams.length} team${p.teams.length === 1 ? '' : 's'} · ${bundleGames(p)} games`,
+        members(p)))
     .join('\n');
 
   const h2hRows = [everything, ...groups]
@@ -86,8 +94,9 @@ export function renderIndex(
   .rows { display:flex; flex-direction:column; gap:.4rem; }
   .row { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; justify-content:space-between;
          padding:.6rem .8rem; border:1px solid var(--line); border-radius:9px; background:var(--card); }
-  .who { display:flex; flex-direction:column; min-width:8rem; }
+  .who { display:flex; flex-direction:column; min-width:8rem; flex:1 1 14rem; }
   .who span { color:var(--dim); font-size:.8rem; }
+  .who .members { font-size:.78rem; opacity:.8; margin-top:.15rem; line-height:1.35; }
   .acts { display:flex; gap:.35rem; flex-wrap:wrap; }
   .btn { font:inherit; font-size:.83rem; padding:.35rem .65rem; border-radius:6px; cursor:pointer;
          border:1px solid var(--line); background:var(--bg); color:var(--fg);
