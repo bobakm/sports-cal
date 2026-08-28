@@ -133,24 +133,8 @@ ${everythingRow}
   </div>
 
   <div class="step">
-    <h2><span class="num">2</span> One calendar per sport</h2>
-    <p>A few taps. Each one lands as its <b>own calendar with its own on/off checkbox</b>, so you can hide all the baseball without touching the soccer.</p>
-    <div class="rows">
-${groupRows}
-    </div>
-  </div>
-
-  <div class="step">
-    <h2><span class="num">3</span> Pick individual teams</h2>
-    <p>The most setup and the most control — <b>every team is a separate calendar</b> you can switch on and off whenever you like, right in your calendar's sidebar.</p>
-    <div class="rows">
-${teamRows}
-    </div>
-  </div>
-
-  <div class="step">
-    <h2><span class="num">4</span> Just the big days</h2>
-    <p>No fixtures, just <b>all-day banners</b> on dates worth knowing about — two of your teams facing each other, a cup tie, a knockout, a ranked college matchup. Give this calendar its own colour and those days light up. Works well layered on top of anything above.</p>
+    <h2><span class="num">2</span> Just the big days</h2>
+    <p>No fixtures, just <b>all-day banners</b> on dates worth knowing about — two of your teams facing each other, a cup tie, a knockout, a ranked college matchup. Give this calendar its own colour and those days light up. Designed to layer on top of any of the others.</p>
     <div class="rows">
 ${alertCount ? row(site, 'alerts', '⭐ Big Days', `${alertCount} days`) : ''}
 ${localCount ? row(site, 'local', '🏟 Games You Could Go To', `${localCount} days · Houston & Dallas home`) : ''}
@@ -158,10 +142,26 @@ ${localCount ? row(site, 'local', '🏟 Games You Could Go To', `${localCount} d
   </div>
 
   <div class="step">
-    <h2><span class="num">5</span> Only when your teams meet</h2>
-    <p>Deliberately sparse — <b>nothing but the games where two teams you follow face each other.</b> A handful of dates a year. Good as a second calendar alongside anything above; these fixtures are already included in the bundles, so this one is for people who want them called out separately.</p>
+    <h2><span class="num">3</span> Only when your teams meet</h2>
+    <p>Deliberately sparse — <b>nothing but the games where two teams you follow face each other.</b> A handful of dates a year. These fixtures are already inside the bundles, so this is for people who want them called out on their own.</p>
     <div class="rows">
 ${h2hRows}
+    </div>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">4</span> One calendar per sport</h2>
+    <p>A few taps. Each one lands as its <b>own calendar with its own on/off checkbox</b>, so you can hide all the baseball without touching the soccer.</p>
+    <div class="rows">
+${groupRows}
+    </div>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">5</span> Pick individual teams</h2>
+    <p>The most setup and the most control — <b>every team is a separate calendar</b> you can switch on and off whenever you like, right in your calendar's sidebar.</p>
+    <div class="rows">
+${teamRows}
     </div>
   </div>
 
