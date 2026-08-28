@@ -46,13 +46,15 @@ export function renderIndex(
 
   // Spell out what's in each bundle so nobody has to cross-reference the list
   // at the bottom of the page.
-  const byName = new Map(teams.map(t => [t.slug, t.name.replace(/ National/, '')]));
+  // Only name teams that actually have a feed. A team in the registry with no
+  // fixtures yet (between tournaments, say) must not be advertised as included.
+  const byName = new Map(live.map(t => [t.slug, t.name.replace(/ National/, '')]));
   const members = (p: Preset) =>
     p.teams.map(s => byName.get(s)).filter(Boolean).sort((a, b) => a!.localeCompare(b!)).join(', ');
 
   const groupRows = groups.map(p =>
     row(site, p.slug, p.name,
-        `${p.teams.length} team${p.teams.length === 1 ? '' : 's'} · ${bundleGames(p)} games`,
+        `${p.teams.filter(t => byName.has(t)).length} teams · ${bundleGames(p)} games`,
         members(p)))
     .join('\n');
 
