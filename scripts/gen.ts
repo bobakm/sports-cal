@@ -16,7 +16,7 @@ const upcoming = fixtures.filter(f => f.start.getTime() >= now);
 const withTv = fixtures.filter(f => f.broadcasts.length).length;
 console.log(`  ${fixtures.length} fixtures in window (${upcoming.length} upcoming), ${withTv} with broadcast info`);
 
-const ics = buildFeed(team, fixtures);
+const ics = buildFeed(team, fixtures, new Set());
 const path = `out/${team.slug}.ics`;
 writeFileSync(path, ics);
 console.log(`  wrote ${path} (${(ics.length / 1024).toFixed(1)} KB, ${(ics.match(/BEGIN:VEVENT/g) ?? []).length} VEVENTs)`);

@@ -22,6 +22,7 @@ export type Fixture = {
   broadcasts: string[];
   competition: string;     // league slug it came from
   completed: boolean;
+  score?: { us: number; them: number };
 };
 
 /** ESPN's edge (Akamai) blocks bursts — a parallel sweep of ~70 requests gets
@@ -79,7 +80,7 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
 
   const competitors = comp.competitors ?? [];
   const me = competitors.find((c: any) => String(c?.team?.id) === selfId);
-  const them = competitors.find((c: any) => String(c?.team?.id) !== selfId);
+  const them_ = competitors.find((c: any) => String(c?.team?.id) !== selfId);
 
   const broadcasts: string[] = [];
   for (const b of (comp.broadcasts ?? [])) {
@@ -87,8 +88,13 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
     if (n && !broadcasts.includes(n)) broadcasts.push(n);
   }
 
+  const completed = Boolean(comp?.status?.type?.completed);
+  const us = Number(me?.score), them = Number(them_?.score);
+  const score = completed && Number.isFinite(us) && Number.isFinite(them)
+    ? { us, them } : undefined;
+
   const homeAway = comp.neutralSite ? 'neutral' : (me?.homeAway ?? 'home');
-  const opponent = them?.team?.shortDisplayName ?? them?.team?.displayName ?? 'TBD';
+  const opponent = them_?.team?.shortDisplayName ?? them_?.team?.displayName ?? 'TBD';
 
   return {
     id: String(ev.id),
@@ -99,7 +105,8 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
     venue: comp?.venue?.fullName,
     broadcasts,
     competition: league,
-    completed: Boolean(comp?.status?.type?.completed) || start.getTime() < Date.now(),
+    completed: completed || start.getTime() < Date.now(),
+    score,
   };
 }
 

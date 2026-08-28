@@ -1,36 +1,27 @@
 import ical, { ICalCalendarMethod } from 'ical-generator';
 import { ICON, type Team } from './teams.ts';
 import type { Fixture } from './espn.ts';
+import { tierFor, fixtureKey, TIER_ICON } from './tiers.ts';
+import type { Cluster } from './clusters.ts';
 
 const PRODID = { company: 'sports-calendar', product: 'feed', language: 'EN' };
+const TTL = 60 * 60 * 6;   // REFRESH-INTERVAL / X-PUBLISHED-TTL hint
 
-export function buildFeed(team: Team, fixtures: Fixture[]): string {
-  const cal = ical({
-    name: `${ICON[team.category]} ${team.name}`,
-    description: `${team.name} fixtures. Times update automatically.`,
-    prodId: PRODID,
-    ttl: 60 * 60 * 6,          // REFRESH-INTERVAL / X-PUBLISHED-TTL hint
-    method: ICalCalendarMethod.PUBLISH,
-  });
+const cal = (name: string, description: string) =>
+  ical({ name, description, prodId: PRODID, ttl: TTL, method: ICalCalendarMethod.PUBLISH });
 
-  for (const f of fixtures) {
-    const vs = f.homeAway === 'away' ? '@' : 'v';
-    cal.createEvent({
-      // Deterministic: same game always produces the same UID, so a refresh
-      // updates the existing event instead of adding a second copy.
-      id: `${team.slug}-${f.competition}-${f.id}@sports-calendar`,
-      start: f.start,
-      end: new Date(f.start.getTime() + team.durationMin * 60_000),
-      summary: `${team.short} ${vs} ${f.opponent}`,
-      location: f.venue,
-      description: describe(f, team),
-    });
-  }
-  return cal.toString();
+/** Titles get read in a crowded month view where ~20 characters survive, so the
+ *  tracked team and any flag go first and the detail goes in the description. */
+function summaryFor(team: Team, f: Fixture, headToHead: Set<string>): string {
+  const icon = TIER_ICON[tierFor(f, headToHead)];
+  const away = f.homeAway === 'away' ? '@ ' : '';
+  if (f.score) return `${icon}${team.short} ${f.score.us}-${f.score.them} ${away}${f.opponent}`;
+  return `${icon}${team.short} ${f.homeAway === 'away' ? '@' : 'v'} ${f.opponent}`;
 }
 
 function describe(f: Fixture, team: Team): string {
   const lines: string[] = [];
+  if (f.score) lines.push(`Final: ${team.short} ${f.score.us}-${f.score.them} ${f.opponent}`);
   const tv = f.broadcasts.length ? f.broadcasts.join(', ') : team.defaultBroadcast;
   if (tv) lines.push(`TV: ${tv}`);
   else if (!f.completed) lines.push('TV: not announced yet');
@@ -39,43 +30,62 @@ function describe(f: Fixture, team: Team): string {
   return lines.join('\n');
 }
 
-/** Combined feed for several teams. Deduped by ESPN event id: a fixture
- *  between two tracked teams is returned by BOTH teams' sources and would
- *  otherwise appear twice on the calendar. */
-export function buildBundle(
-  name: string,
-  entries: { team: Team; fixtures: Fixture[] }[],
-): string {
-  const cal = ical({
-    name,
-    description: `${name} — fixtures update automatically.`,
-    prodId: PRODID,
-    ttl: 60 * 60 * 6,
-    method: ICalCalendarMethod.PUBLISH,
+function addEvent(c: ReturnType<typeof cal>, team: Team, f: Fixture, h: Set<string>, uid: string) {
+  c.createEvent({
+    id: uid,
+    start: f.start,
+    end: new Date(f.start.getTime() + team.durationMin * 60_000),
+    summary: summaryFor(team, f, h),
+    location: f.venue,
+    description: describe(f, team),
   });
+}
 
+export function buildFeed(team: Team, fixtures: Fixture[], headToHead: Set<string>): string {
+  const c = cal(`${ICON[team.category]} ${team.name}`,
+                `${team.name} fixtures. Times update automatically.`);
+  for (const f of fixtures)
+    // Deterministic: the same game always yields the same UID, so a refresh
+    // updates the existing event rather than adding a second copy.
+    addEvent(c, team, f, headToHead, `${team.slug}-${fixtureKey(f)}@sports-calendar`);
+  return c.toString();
+}
+
+/** Combined feed. Deduped by fixture key: a game between two teams you follow
+ *  is returned by BOTH teams' sources and would otherwise appear twice. */
+export function buildBundle(
+  name: string, entries: { team: Team; fixtures: Fixture[] }[], headToHead: Set<string>,
+): string {
+  const c = cal(name, `${name} — fixtures update automatically.`);
   const seen = new Set<string>();
-  for (const { team, fixtures } of entries) {
+  for (const { team, fixtures } of entries)
     for (const f of fixtures) {
-      const key = `${f.competition}-${f.id}`;
+      const key = fixtureKey(f);
       if (seen.has(key)) continue;
       seen.add(key);
-      const vs = f.homeAway === 'away' ? '@' : 'v';
-      cal.createEvent({
-        id: `${f.competition}-${f.id}@sports-calendar`,
-        start: f.start,
-        end: new Date(f.start.getTime() + team.durationMin * 60_000),
-        summary: `${team.short} ${vs} ${f.opponent}`,
-        location: f.venue,
-        description: describe(f, team),
-      });
+      addEvent(c, team, f, headToHead, `${key}@sports-calendar`);
     }
-  }
-  return cal.toString();
+  return c.toString();
 }
 
-/** A valid, empty-but-titled feed for an unknown slug — never a raw error,
- *  because a calendar client will retry a broken URL forever. */
-export function emptyFeed(slug: string): string {
-  return ical({ name: `Unknown team (${slug})`, prodId: PRODID }).toString();
+/** All-day markers for cluster days. These are true DATE-valued events, not
+ *  midnight timestamps — a timestamped "all day" event lands on the wrong date
+ *  for anyone outside the clustering timezone. */
+export function buildAlerts(clusters: Cluster[]): string {
+  const c = cal('🔥 Sports Days', 'All-day markers for days worth clearing.');
+  for (const cl of clusters) {
+    c.createEvent({
+      id: `${cl.day}-${cl.summary.slice(0, 12)}@sports-calendar`,
+      start: new Date(`${cl.day}T00:00:00Z`),
+      allDay: true,
+      summary: cl.summary,
+      description: cl.description,
+    });
+  }
+  return c.toString();
 }
+
+/** Valid, empty-but-titled feed for an unknown slug — never a raw error,
+ *  because a calendar client retries a broken URL forever. */
+export const emptyFeed = (slug: string): string =>
+  ical({ name: `Unknown team (${slug})`, prodId: PRODID }).toString();

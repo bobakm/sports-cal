@@ -22,6 +22,7 @@ function row(site: string, slug: string, label: string, sub: string): string {
 export function renderIndex(
   site: string, teams: Team[], presets: Preset[], counts: Map<string, number>,
   bundleCounts: Map<string, number> = new Map(),
+  alertCount = 0,
 ): string {
   const live = teams.filter(t => (counts.get(t.slug) ?? 0) > 0);
   const everything = presets.find(p => p.slug === 'everything');
@@ -120,6 +121,14 @@ ${groupRows}
     <p>The most setup and the most control — <b>every team is a separate calendar</b> you can switch on and off whenever you like, right in your calendar's sidebar.</p>
     <div class="rows">
 ${teamRows}
+    </div>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">4</span> Just the big days</h2>
+    <p>Not every game — only the days worth clearing your evening for: two of your teams playing each other, a cup tie, or three-plus games stacked on one day. They arrive as <b>all-day banners</b>, so give this calendar its own colour and key days light up.</p>
+    <div class="rows">
+${alertCount ? row(site, 'alerts', '🔥 Sports Days', `${alertCount} days flagged`) : ''}
     </div>
   </div>
 

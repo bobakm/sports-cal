@@ -4,7 +4,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { TEAMS, type Team } from '../lib/teams.ts';
 import { PRESETS, teamsFor } from '../lib/presets.ts';
 import { fetchTeamFixtures, type Fixture } from '../lib/espn.ts';
-import { buildFeed, buildBundle } from '../lib/ics.ts';
+import { buildFeed, buildBundle, buildAlerts } from '../lib/ics.ts';
+import { findHeadToHead } from '../lib/tiers.ts';
+import { findClusters } from '../lib/clusters.ts';
 import { renderIndex } from '../lib/page.ts';
 
 // host + path, no scheme — we prefix webcal:// or https:// as needed
@@ -41,11 +43,16 @@ const write = (path: string, body: string) => {
   console.log(`  wrote ${path} (${(body.length / 1024).toFixed(1)} KB)`);
 };
 
+// A fixture that shows up under two tracked teams IS your teams playing each
+// other — that's what earns the 🔥 flag.
+const headToHead = findHeadToHead(fixtures);
+console.log(`\n${headToHead.size} head-to-head fixtures between your teams`);
+
 console.log('\nfeeds:');
 for (const team of TEAMS) {
   const f = fixtures.get(team.slug);
   if (!f?.length) { console.log(`  skip ${team.slug} (no fixtures)`); continue; }
-  write(`feed/${team.slug}.ics`, buildFeed(team, f));
+  write(`feed/${team.slug}.ics`, buildFeed(team, f, headToHead));
 }
 
 const bundleCounts = new Map<string, number>();
@@ -54,12 +61,16 @@ for (const preset of PRESETS) {
     .map(team => ({ team, fixtures: fixtures.get(team.slug) ?? [] }))
     .filter(e => e.fixtures.length);
   if (!entries.length) continue;
-  const ics = buildBundle(preset.name, entries);
+  const ics = buildBundle(preset.name, entries, headToHead);
   bundleCounts.set(preset.slug, (ics.match(/BEGIN:VEVENT/g) ?? []).length);
   write(`feed/${preset.slug}.ics`, ics);
 }
 
+const clusters = findClusters(fixtures, TEAMS, headToHead);
+write('feed/alerts.ics', buildAlerts(clusters));
+console.log(`  ${clusters.length} cluster days flagged`);
+
 const counts = new Map(TEAMS.map(t => [t.slug, (fixtures.get(t.slug) ?? []).length]));
-writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts, bundleCounts));
+writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts, bundleCounts, clusters.length));
 writeFileSync('site/.nojekyll', '');
 console.log(`\nbuilt for https://${SITE}  (${failures} fetch failures)`);

@@ -20,7 +20,7 @@ export async function feedFor(slug: string): Promise<{ status: number; body: str
   try {
     const fixtures = await fetchTeamFixtures(team);
     if (!fixtures.length) throw new Error('upstream returned no fixtures');
-    const ics = buildFeed(team, fixtures);
+    const ics = buildFeed(team, fixtures, new Set());
     cache.set(team.slug, { ics, at: Date.now() });
     return { status: 200, body: ics, stale: false };
   } catch (e) {
