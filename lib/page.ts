@@ -25,7 +25,13 @@ export function renderIndex(
   alertCount = 0,
   localCount = 0,
 ): string {
-  const live = teams.filter(t => (counts.get(t.slug) ?? 0) > 0);
+  // Grouped by sport (so the icons cluster), alphabetical inside each group.
+  const CATEGORY_ORDER: Team['category'][] = ['EPL', 'NHL', 'NCAAF', 'MLB', 'NATIONAL'];
+  const live = teams
+    .filter(t => (counts.get(t.slug) ?? 0) > 0)
+    .sort((a, b) =>
+      CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category)
+      || a.name.localeCompare(b.name));
   const everything = presets.find(p => p.slug === 'everything');
   const groups = presets.filter(p => p.slug !== 'everything');
 
