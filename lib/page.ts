@@ -94,6 +94,11 @@ export function renderIndex(
          text-decoration:none; white-space:nowrap; }
   .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
   .btn:hover { opacity:.85; }
+  .inapp { background:var(--warnbg); border:1px solid var(--warnline); color:var(--warn);
+           border-radius:9px; padding:.75rem .9rem; font-size:.9rem; margin:0 0 1.5rem; }
+  .inapp b { color:var(--warn); }
+  .urlbox { width:100%; margin-top:.5rem; font:inherit; font-size:.8rem; padding:.4rem .5rem;
+            border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); }
   .key { border:1px solid var(--line); border-radius:12px; padding:1rem 1.15rem; margin:0 0 1.75rem; }
   .key h3 { font-size:.78rem; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);
             margin:0 0 .6rem; font-weight:600; }
@@ -119,6 +124,8 @@ export function renderIndex(
   <p class="lede">Tap once and the games show up in your own calendar app — and keep updating themselves. You never have to come back here.</p>
 
   <p class="pick"><b>Which button?</b> Go by the app you actually open, not the phone you own. If you use the <b>Google Calendar app on an iPhone</b>, you want <b>Google Calendar</b> — and you'll need a computer for it, just once.</p>
+
+  <p class="inapp" id="inapp"><b>Opened this from WhatsApp or Instagram?</b> Tap the <b>⋯</b> or <b>Share</b> icon and choose <b>Open in Safari</b> (or Chrome) first. Chat apps use a cut-down browser that silently blocks calendar subscriptions.</p>
 
   <div class="key">
     <h3>What the symbols mean</h3>
@@ -186,12 +193,32 @@ ${teamRows}
   </details>
 </main>
 <script>
+  // Chat-app browsers (WhatsApp, Instagram, Messenger) block webcal:// handoff
+  // and often the clipboard too. Surface the warning only where it applies.
+  (function () {
+    var ua = navigator.userAgent || '';
+    var inApp = /FBAN|FBAV|Instagram|Line|WhatsApp|Messenger|Snapchat/i.test(ua)
+      || (/iPhone|iPad/.test(ua) && !/Safari/.test(ua));
+    if (!inApp) { var w = document.getElementById('inapp'); if (w) w.style.display = 'none'; }
+  })();
+
+  // Always leave a way to get the URL, even with no clipboard access.
+  function reveal(btn) {
+    if (btn.parentNode.querySelector('.urlbox')) return;
+    var i = document.createElement('input');
+    i.className = 'urlbox'; i.value = btn.dataset.url; i.readOnly = true;
+    btn.closest('.row').appendChild(i);
+    i.focus(); i.select();
+  }
   document.querySelectorAll('.copy').forEach(function (b) {
     b.addEventListener('click', function () {
-      navigator.clipboard.writeText(b.dataset.url).then(function () {
+      var done = function () {
         var t = b.textContent; b.textContent = 'Copied'; b.classList.add('primary');
         setTimeout(function () { b.textContent = t; b.classList.remove('primary'); }, 1200);
-      });
+      };
+      try {
+        navigator.clipboard.writeText(b.dataset.url).then(done, function () { reveal(b); });
+      } catch (e) { reveal(b); }
     });
   });
 </script>
