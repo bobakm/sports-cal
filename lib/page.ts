@@ -23,6 +23,7 @@ export function renderIndex(
   site: string, teams: Team[], presets: Preset[], counts: Map<string, number>,
   bundleCounts: Map<string, number> = new Map(),
   alertCount = 0,
+  localCount = 0,
 ): string {
   const live = teams.filter(t => (counts.get(t.slug) ?? 0) > 0);
   const everything = presets.find(p => p.slug === 'everything');
@@ -131,9 +132,10 @@ ${teamRows}
 
   <div class="step">
     <h2><span class="num">4</span> Just the big days</h2>
-    <p>Not every game — only the days worth clearing your evening for: two of your teams playing each other, a cup tie, or three-plus games stacked on one day. They arrive as <b>all-day banners</b>, so give this calendar its own colour and key days light up.</p>
+    <p>No fixtures, just <b>all-day banners</b> on dates worth knowing about — two of your teams facing each other, a cup tie, a knockout, a ranked college matchup. Give this calendar its own colour and those days light up. Works well layered on top of anything above.</p>
     <div class="rows">
-${alertCount ? row(site, 'alerts', '🔥 Sports Days', `${alertCount} days flagged`) : ''}
+${alertCount ? row(site, 'alerts', '⭐ Big Days', `${alertCount} days`) : ''}
+${localCount ? row(site, 'local', '🏟 Games You Could Go To', `${localCount} days · Houston & Dallas home`) : ''}
     </div>
   </div>
 

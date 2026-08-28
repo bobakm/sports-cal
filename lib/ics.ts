@@ -71,8 +71,8 @@ export function buildBundle(
 /** All-day markers for cluster days. These are true DATE-valued events, not
  *  midnight timestamps — a timestamped "all day" event lands on the wrong date
  *  for anyone outside the clustering timezone. */
-export function buildAlerts(clusters: Cluster[]): string {
-  const c = cal('🔥 Sports Days', 'All-day markers for days worth clearing.');
+export function buildAlerts(clusters: Cluster[], name: string, desc: string): string {
+  const c = cal(name, desc);
   for (const cl of clusters) {
     c.createEvent({
       id: `${cl.day}-${cl.kind}@sports-calendar`,

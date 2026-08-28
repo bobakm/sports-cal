@@ -24,7 +24,7 @@ type Entry = { team: Team; fixture: Fixture; tier: Tier };
 
 export function findClusters(
   byTeam: Map<string, Fixture[]>, teams: Team[], headToHead: Set<string>,
-): Cluster[] {
+): { marquee: Cluster[]; local: Cluster[] } {
   const bySlug = new Map(teams.map(t => [t.slug, t]));
   const days = new Map<string, Entry[]>();
 
@@ -39,12 +39,13 @@ export function findClusters(
   }
 
   const out: Cluster[] = [];
+  const local: Cluster[] = [];
   for (const [day, entries] of [...days].sort()) {
     const sorted = entries.sort((a, b) => a.fixture.start.getTime() - b.fixture.start.getTime());
     const line = (e: Entry) =>
       `${e.team.short} ${e.fixture.homeAway === 'away' ? '@' : 'v'} ${e.fixture.opponent}`;
 
-    // Two teams you follow, playing each other. Always worth knowing.
+    // Two teams you follow, playing each other.
     const h2h = sorted.filter(e => e.tier === 1);
     if (h2h.length) {
       out.push({ day, kind: 'head-to-head',
@@ -52,11 +53,19 @@ export function findClusters(
                  description: sorted.map(line).join('\n') });
     }
 
+    // Marquee: cups, knockouts, tournaments, ranked college matchups.
+    const marquee = sorted.filter(e => e.tier === 2);
+    if (marquee.length && !h2h.length) {
+      out.push({ day, kind: 'marquee',
+                 summary: `⭐ ${[...new Set(marquee.map(line))].slice(0, 3).join(', ')}`,
+                 description: sorted.map(line).join('\n') });
+    }
+
     // Games you could physically attend.
     const houston = sorted.filter(e =>
       HOUSTON_HOME_SLUGS.includes(e.team.slug) && e.fixture.homeAway === 'home');
     if (houston.length) {
-      out.push({ day, kind: 'houston',
+      local.push({ day, kind: 'houston',
                  summary: `🏟 Houston: ${houston.map(line).join(', ')}`,
                  description: sorted.map(line).join('\n') });
     }
@@ -64,10 +73,10 @@ export function findClusters(
     const regional = sorted.filter(e =>
       REGIONAL_HOME_SLUGS.includes(e.team.slug) && e.fixture.homeAway === 'home');
     if (regional.length) {
-      out.push({ day, kind: 'dallas',
+      local.push({ day, kind: 'dallas',
                  summary: `🚗 Dallas: ${regional.map(line).join(', ')}`,
                  description: sorted.map(line).join('\n') });
     }
   }
-  return out;
+  return { marquee: out, local };
 }

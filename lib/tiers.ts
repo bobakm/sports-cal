@@ -15,9 +15,13 @@ export const TIER_ICON: Record<Tier, string> = { 1: '🔥 ', 2: '⭐ ', 3: '' };
 /** Stable identity for a fixture across the teams that share it. */
 export const fixtureKey = (f: Fixture) => `${f.competition}-${f.id}`;
 
+/** A ranked opponent makes a regular college game a real occasion. */
+export const RANKED_CUTOFF = 25;
+
 export function tierFor(f: Fixture, headToHead: Set<string>): Tier {
   if (headToHead.has(fixtureKey(f))) return 1;            // two teams you follow
   if (!REGULAR_SEASON.has(f.competition) && !FRIENDLIES.has(f.competition)) return 2;
+  if (f.opponentRank && f.opponentRank <= RANKED_CUTOFF) return 2;
   return 3;
 }
 

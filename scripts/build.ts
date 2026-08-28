@@ -76,8 +76,12 @@ for (const preset of PRESETS) {
   }
 }
 
-const clusters = findClusters(fixtures, TEAMS, headToHead);
-write('feed/alerts.ics', buildAlerts(clusters));
+const { marquee, local } = findClusters(fixtures, TEAMS, headToHead);
+write('feed/alerts.ics', buildAlerts(marquee, '⭐ Big Days',
+  'Head-to-head fixtures and marquee matchups, as all-day markers.'));
+write('feed/local.ics', buildAlerts(local, '🏟 Games You Could Go To',
+  'Days your Houston or Dallas teams are at home.'));
+const clusters = marquee;
 const byKind = new Map<string, number>();
 for (const c of clusters) {
   byKind.set(c.kind, (byKind.get(c.kind) ?? 0) + 1);
@@ -86,6 +90,6 @@ console.log(`  ${clusters.length} cluster days flagged:`);
 for (const [k, n] of byKind) console.log(`    ${k}: ${n}`);
 
 const counts = new Map(TEAMS.map(t => [t.slug, (fixtures.get(t.slug) ?? []).length]));
-writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts, bundleCounts, clusters.length));
+writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts, bundleCounts, marquee.length, local.length));
 writeFileSync('site/.nojekyll', '');
 console.log(`\nbuilt for https://${SITE}  (${failures} fetch failures)`);

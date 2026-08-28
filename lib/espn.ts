@@ -23,6 +23,7 @@ export type Fixture = {
   competition: string;     // league slug it came from
   completed: boolean;
   score?: { us: number; them: number };
+  opponentRank?: number;   // AP/curated rank; absent or 99 = unranked
 };
 
 /** ESPN's edge (Akamai) blocks bursts — a parallel sweep of ~70 requests gets
@@ -107,6 +108,7 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
     competition: league,
     completed: completed || start.getTime() < Date.now(),
     score,
+    opponentRank: Number(them_?.curatedRank?.current) || undefined,
   };
 }
 
