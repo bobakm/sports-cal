@@ -48,15 +48,18 @@ for (const team of TEAMS) {
   write(`feed/${team.slug}.ics`, buildFeed(team, f));
 }
 
+const bundleCounts = new Map<string, number>();
 for (const preset of PRESETS) {
   const entries = teamsFor(preset)
     .map(team => ({ team, fixtures: fixtures.get(team.slug) ?? [] }))
     .filter(e => e.fixtures.length);
   if (!entries.length) continue;
-  write(`feed/${preset.slug}.ics`, buildBundle(preset.name, entries));
+  const ics = buildBundle(preset.name, entries);
+  bundleCounts.set(preset.slug, (ics.match(/BEGIN:VEVENT/g) ?? []).length);
+  write(`feed/${preset.slug}.ics`, ics);
 }
 
 const counts = new Map(TEAMS.map(t => [t.slug, (fixtures.get(t.slug) ?? []).length]));
-writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts));
+writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts, bundleCounts));
 writeFileSync('site/.nojekyll', '');
 console.log(`\nbuilt for https://${SITE}  (${failures} fetch failures)`);

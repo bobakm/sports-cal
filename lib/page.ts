@@ -21,20 +21,24 @@ function row(site: string, slug: string, label: string, sub: string): string {
 
 export function renderIndex(
   site: string, teams: Team[], presets: Preset[], counts: Map<string, number>,
+  bundleCounts: Map<string, number> = new Map(),
 ): string {
   const live = teams.filter(t => (counts.get(t.slug) ?? 0) > 0);
   const everything = presets.find(p => p.slug === 'everything');
   const groups = presets.filter(p => p.slug !== 'everything');
 
+  const bundleGames = (p: Preset) =>
+    bundleCounts.get(p.slug) ?? p.teams.reduce((a, s) => a + (counts.get(s) ?? 0), 0);
+
   const everythingRow = everything
     ? row(site, everything.slug, 'Everything',
-          `${live.length} teams · ${[...counts.values()].reduce((a, b) => a + b, 0)} games`)
+          `${live.length} teams · ${bundleGames(everything)} games`)
     : '';
 
   const groupRows = groups.map(p =>
     row(site, p.slug, p.name,
-        `${p.teams.length} team${p.teams.length === 1 ? '' : 's'} · ` +
-        `${p.teams.reduce((a, s) => a + (counts.get(s) ?? 0), 0)} games`)).join('\n');
+        `${p.teams.length} team${p.teams.length === 1 ? '' : 's'} · ${bundleGames(p)} games`))
+    .join('\n');
 
   const teamRows = live.map(t =>
     row(site, t.slug, `${ICON[t.category]} ${t.name}`, `${counts.get(t.slug)} games`)).join('\n');
