@@ -48,5 +48,9 @@ export const TEAMS: Team[] = [
     ['afc.asian.cup', 'fifa.friendly', 'fifa.worldq.afc', 'fifa.world']),
 ];
 
+export const ICON: Record<Team['category'], string> = {
+  EPL: '⚽', NHL: '🏒', NCAAF: '🏈', MLB: '⚾', NATIONAL: '🌍',
+};
+
 export const bySlug = (slug: string): Team | undefined =>
   TEAMS.find(t => t.slug === slug.toLowerCase());

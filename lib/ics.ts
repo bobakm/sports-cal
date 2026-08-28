@@ -1,12 +1,12 @@
 import ical, { ICalCalendarMethod } from 'ical-generator';
-import type { Team } from './teams.ts';
+import { ICON, type Team } from './teams.ts';
 import type { Fixture } from './espn.ts';
 
 const PRODID = { company: 'sports-calendar', product: 'feed', language: 'EN' };
 
 export function buildFeed(team: Team, fixtures: Fixture[]): string {
   const cal = ical({
-    name: team.name,
+    name: `${ICON[team.category]} ${team.name}`,
     description: `${team.name} fixtures. Times update automatically.`,
     prodId: PRODID,
     ttl: 60 * 60 * 6,          // REFRESH-INTERVAL / X-PUBLISHED-TTL hint
@@ -47,7 +47,7 @@ export function buildBundle(
   entries: { team: Team; fixtures: Fixture[] }[],
 ): string {
   const cal = ical({
-    name,
+    name: `🗓 ${name}`,
     description: `${name} — fixtures update automatically.`,
     prodId: PRODID,
     ttl: 60 * 60 * 6,

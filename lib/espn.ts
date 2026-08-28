@@ -24,7 +24,22 @@ export type Fixture = {
   completed: boolean;
 };
 
+/** ESPN's edge (Akamai) blocks bursts — a parallel sweep of ~70 requests gets
+ *  the whole IP a 403 for several minutes. Everything goes through one queue
+ *  with a gap between calls; the build is not in a hurry. */
+const REQUEST_GAP_MS = 350;
+let chain: Promise<unknown> = Promise.resolve();
+function throttle<T>(fn: () => Promise<T>): Promise<T> {
+  const next = chain.then(() => new Promise(r => setTimeout(r, REQUEST_GAP_MS))).then(fn);
+  chain = next.catch(() => {});
+  return next as Promise<T>;
+}
+
 async function getJSON(url: string): Promise<any | null> {
+  return throttle(() => getJSONNow(url));
+}
+
+async function getJSONNow(url: string): Promise<any | null> {
   try {
     const r = await fetch(url, { headers: HEADERS });
     if (!r.ok) { console.warn(`  ! ${r.status} ${url}`); return null; }
@@ -40,7 +55,8 @@ async function getJSON(url: string): Promise<any | null> {
  *  both calls are required. Missing this yields a calendar with one event in it. */
 async function fetchSource(src: Source): Promise<Fixture[]> {
   const url = `${BASE}/${src.sport}/${src.league}/teams/${src.teamId}/schedule`;
-  const [past, upcoming] = await Promise.all([getJSON(url), getJSON(`${url}?fixture=true`)]);
+  const past = await getJSON(url);
+  const upcoming = await getJSON(`${url}?fixture=true`);
 
   const byId = new Map<string, Fixture>();
   for (const data of [past, upcoming]) {
@@ -88,7 +104,8 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
 }
 
 export async function fetchTeamFixtures(team: Team): Promise<Fixture[]> {
-  const batches = await Promise.all(team.sources.map(fetchSource));
+  const batches: Fixture[][] = [];
+  for (const src of team.sources) batches.push(await fetchSource(src));
   const cutoff = Date.now() - KEEP_PAST_DAYS * 86_400_000;
 
   // Dedupe across sources by ESPN event id: a national team's fixture can be
