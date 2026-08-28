@@ -1,1 +1,0 @@
-{ "rewrites": [{ "source": "/feed/:slug", "destination": "/api/feed/:slug" }] }
