@@ -72,6 +72,14 @@ async function fetchSource(src: Source): Promise<Fixture[]> {
   return [...byId.values()];
 }
 
+/** ESPN returns competitor.score as {value, displayValue} in some sports and a
+ *  bare number/string in others. Number() on the object yields NaN, which
+ *  silently dropped every score. */
+function scoreOf(raw: any): number {
+  const v = raw !== null && typeof raw === 'object' ? (raw.value ?? raw.displayValue) : raw;
+  return Number(v);
+}
+
 function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
   const comp = (ev.competitions ?? [])[0];
   if (!ev?.id || !ev?.date || !comp) return null;
@@ -80,8 +88,12 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
   if (isNaN(start.getTime())) return null;
 
   const competitors = comp.competitors ?? [];
+  // Without a usable selfId every competitor looks like the opponent, which
+  // would print "HOU v Houston Astros" and mark every game as home.
+  if (!selfId) return null;
   const me = competitors.find((c: any) => String(c?.team?.id) === selfId);
   const them_ = competitors.find((c: any) => String(c?.team?.id) !== selfId);
+  if (!me || !them_) return null;
 
   const broadcasts: string[] = [];
   for (const b of (comp.broadcasts ?? [])) {
@@ -89,13 +101,14 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
     if (n && !broadcasts.includes(n)) broadcasts.push(n);
   }
 
-  const completed = Boolean(comp?.status?.type?.completed);
-  const us = Number(me?.score), them = Number(them_?.score);
+  const st = comp?.status?.type;
+  const completed = Boolean(st?.completed) || st?.name === 'STATUS_FINAL' || st?.state === 'post';
+  const us = scoreOf(me?.score), them = scoreOf(them_?.score);
   const score = completed && Number.isFinite(us) && Number.isFinite(them)
     ? { us, them } : undefined;
 
-  const homeAway = comp.neutralSite ? 'neutral' : (me?.homeAway ?? 'home');
-  const opponent = them_?.team?.shortDisplayName ?? them_?.team?.displayName ?? 'TBD';
+  const homeAway = comp.neutralSite ? 'neutral' : (me.homeAway ?? 'home');
+  const opponent = them_.team?.shortDisplayName ?? them_.team?.displayName ?? 'TBD';
 
   return {
     id: String(ev.id),
@@ -108,7 +121,7 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
     competition: league,
     completed: completed || start.getTime() < Date.now(),
     score,
-    opponentRank: Number(them_?.curatedRank?.current) || undefined,
+    opponentRank: Number(them_.curatedRank?.current) || undefined,
   };
 }
 

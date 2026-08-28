@@ -81,7 +81,9 @@ export function buildAlerts(clusters: Cluster[], name: string, desc: string): st
   for (const cl of clusters) {
     c.createEvent({
       id: `${cl.day}-${cl.kind}@sports-calendar`,
-      start: new Date(`${cl.day}T00:00:00Z`),
+      // Midday, not midnight: a build machine west of UTC would render a
+      // midnight-UTC date as the previous day.
+      start: new Date(`${cl.day}T12:00:00Z`),
       allDay: true,
       summary: cl.summary,
       description: cl.description,
