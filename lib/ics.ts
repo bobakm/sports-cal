@@ -47,7 +47,7 @@ export function buildBundle(
   entries: { team: Team; fixtures: Fixture[] }[],
 ): string {
   const cal = ical({
-    name: `🗓 ${name}`,
+    name,
     description: `${name} — fixtures update automatically.`,
     prodId: PRODID,
     ttl: 60 * 60 * 6,

@@ -9,7 +9,7 @@ const inCategory = (c: Team['category']) =>
   TEAMS.filter(t => t.category === c).map(t => t.slug);
 
 export const PRESETS: Preset[] = [
-  { slug: 'everything', name: 'Everything',      teams: TEAMS.map(t => t.slug) },
+  { slug: 'everything', name: '🗓 Everything',   teams: TEAMS.map(t => t.slug) },
   { slug: 'epl',        name: `${ICON.EPL} Premier League`, teams: inCategory('EPL') },
   { slug: 'nhl',        name: `${ICON.NHL} NHL`,            teams: inCategory('NHL') },
   { slug: 'ncaaf',      name: `${ICON.NCAAF} College Football`, teams: inCategory('NCAAF') },
