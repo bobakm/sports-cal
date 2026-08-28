@@ -3,14 +3,14 @@ import type { Team } from './teams.ts';
 import { tierFor, type Tier } from './tiers.ts';
 
 /** "Same day" is ambiguous for a 20:00 ET game or an 11:00 UTC European one.
- *  Every day-bucketing decision happens in this zone regardless of where the
- *  subscriber lives. */
+ *  All day-bucketing happens in this zone regardless of where the subscriber
+ *  lives. */
 export const CLUSTER_TZ = 'America/Chicago';
 
-/** Tunable — these are the rules most likely to need adjusting after a season
- *  of watching them fire. */
-export const BBQ_MIN_TEAMS = 3;              // 3+ of your teams on one day
-export const BBQ_MIN_TEAMS_WITH_BIG_GAME = 2; // or 2, if one is a big game
+/** Counting how many teams play on a day turned out to measure the schedule,
+ *  not significance — four college teams play most Saturdays and the MLB sides
+ *  play daily, so a volume rule flagged 207 of 216 days. Alerts are now about
+ *  WHICH game it is, not how many there are. */
 export const HOUSTON_HOME_SLUGS = ['astros', 'houston'];
 export const REGIONAL_HOME_SLUGS = ['stars'];
 
@@ -19,22 +19,7 @@ const DAY = new Intl.DateTimeFormat('en-CA', {
 });
 export const dayKey = (d: Date): string => DAY.format(d);
 
-export type Cluster = { day: string; summary: string; description: string };
-
-/** How many distinct teams play on each day — used to pick a threshold that
- *  actually makes BBQ Day rare. */
-export function dayHistogram(byTeam: Map<string, Fixture[]>): Map<number, number> {
-  const days = new Map<string, Set<string>>();
-  for (const [slug, fixtures] of byTeam)
-    for (const f of fixtures) {
-      const k = dayKey(f.start);
-      if (!days.has(k)) days.set(k, new Set());
-      days.get(k)!.add(slug);
-    }
-  const hist = new Map<number, number>();
-  for (const teams of days.values()) hist.set(teams.size, (hist.get(teams.size) ?? 0) + 1);
-  return new Map([...hist].sort((a, b) => a[0] - b[0]));
-}
+export type Cluster = { day: string; kind: string; summary: string; description: string };
 type Entry = { team: Team; fixture: Fixture; tier: Tier };
 
 export function findClusters(
@@ -55,30 +40,33 @@ export function findClusters(
 
   const out: Cluster[] = [];
   for (const [day, entries] of [...days].sort()) {
-    const distinctTeams = new Set(entries.map(e => e.team.slug));
-    const bigGame = entries.some(e => e.tier <= 2);
+    const sorted = entries.sort((a, b) => a.fixture.start.getTime() - b.fixture.start.getTime());
+    const line = (e: Entry) =>
+      `${e.team.short} ${e.fixture.homeAway === 'away' ? '@' : 'v'} ${e.fixture.opponent}`;
 
-    const houston = entries.filter(e =>
-      HOUSTON_HOME_SLUGS.includes(e.team.slug) && e.fixture.homeAway === 'home');
-    const regional = entries.filter(e =>
-      REGIONAL_HOME_SLUGS.includes(e.team.slug) && e.fixture.homeAway === 'home');
-
-    const bbq = distinctTeams.size >= BBQ_MIN_TEAMS
-      || (distinctTeams.size >= BBQ_MIN_TEAMS_WITH_BIG_GAME && bigGame);
-
-    const lines = entries
-      .sort((a, b) => a.fixture.start.getTime() - b.fixture.start.getTime())
-      .map(e => `${e.team.short} ${e.fixture.homeAway === 'away' ? '@' : 'v'} ${e.fixture.opponent}`);
-
-    if (houston.length) {
-      out.push({ day, summary: `🏟 Houston Day — ${houston.map(e => e.team.short).join(' + ')} home`,
-                 description: lines.join('\n') });
-    } else if (regional.length) {
-      out.push({ day, summary: '🚗 Stars home in Dallas', description: lines.join('\n') });
+    // Two teams you follow, playing each other. Always worth knowing.
+    const h2h = sorted.filter(e => e.tier === 1);
+    if (h2h.length) {
+      out.push({ day, kind: 'head-to-head',
+                 summary: `🔥 ${[...new Set(h2h.map(line))].join(', ')}`,
+                 description: sorted.map(line).join('\n') });
     }
-    if (bbq) {
-      out.push({ day, summary: `🔥 BBQ Day — ${entries.length} games, ${distinctTeams.size} teams`,
-                 description: lines.join('\n') });
+
+    // Games you could physically attend.
+    const houston = sorted.filter(e =>
+      HOUSTON_HOME_SLUGS.includes(e.team.slug) && e.fixture.homeAway === 'home');
+    if (houston.length) {
+      out.push({ day, kind: 'houston',
+                 summary: `🏟 Houston: ${houston.map(line).join(', ')}`,
+                 description: sorted.map(line).join('\n') });
+    }
+
+    const regional = sorted.filter(e =>
+      REGIONAL_HOME_SLUGS.includes(e.team.slug) && e.fixture.homeAway === 'home');
+    if (regional.length) {
+      out.push({ day, kind: 'dallas',
+                 summary: `🚗 Dallas: ${regional.map(line).join(', ')}`,
+                 description: sorted.map(line).join('\n') });
     }
   }
   return out;

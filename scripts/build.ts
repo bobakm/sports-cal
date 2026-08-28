@@ -6,7 +6,7 @@ import { PRESETS, teamsFor, h2hSlug, h2hName } from '../lib/presets.ts';
 import { fetchTeamFixtures, type Fixture } from '../lib/espn.ts';
 import { buildFeed, buildBundle, buildAlerts } from '../lib/ics.ts';
 import { findHeadToHead } from '../lib/tiers.ts';
-import { findClusters, dayHistogram } from '../lib/clusters.ts';
+import { findClusters } from '../lib/clusters.ts';
 import { renderIndex } from '../lib/page.ts';
 
 // host + path, no scheme — we prefix webcal:// or https:// as needed
@@ -76,12 +76,14 @@ for (const preset of PRESETS) {
   }
 }
 
-console.log('\nteams playing per day:');
-for (const [n, days] of dayHistogram(fixtures)) console.log(`  ${n} teams: ${days} days`);
-
 const clusters = findClusters(fixtures, TEAMS, headToHead);
 write('feed/alerts.ics', buildAlerts(clusters));
-console.log(`  ${clusters.length} cluster days flagged`);
+const byKind = new Map<string, number>();
+for (const c of clusters) {
+  byKind.set(c.kind, (byKind.get(c.kind) ?? 0) + 1);
+}
+console.log(`  ${clusters.length} cluster days flagged:`);
+for (const [k, n] of byKind) console.log(`    ${k}: ${n}`);
 
 const counts = new Map(TEAMS.map(t => [t.slug, (fixtures.get(t.slug) ?? []).length]));
 writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts, bundleCounts, clusters.length));

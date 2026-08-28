@@ -75,7 +75,7 @@ export function buildAlerts(clusters: Cluster[]): string {
   const c = cal('🔥 Sports Days', 'All-day markers for days worth clearing.');
   for (const cl of clusters) {
     c.createEvent({
-      id: `${cl.day}-${cl.summary.slice(0, 12)}@sports-calendar`,
+      id: `${cl.day}-${cl.kind}@sports-calendar`,
       start: new Date(`${cl.day}T00:00:00Z`),
       allDay: true,
       summary: cl.summary,

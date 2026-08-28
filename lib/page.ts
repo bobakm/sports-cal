@@ -1,5 +1,5 @@
 import { ICON, type Team } from './teams.ts';
-import type { Preset } from './presets.ts';
+import { h2hSlug, h2hName, type Preset } from './presets.ts';
 
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -39,6 +39,11 @@ export function renderIndex(
   const groupRows = groups.map(p =>
     row(site, p.slug, p.name,
         `${p.teams.length} team${p.teams.length === 1 ? '' : 's'} · ${bundleGames(p)} games`))
+    .join('\n');
+
+  const h2hRows = [everything, ...groups]
+    .filter((p): p is Preset => !!p && (bundleCounts.get(h2hSlug(p)) ?? 0) > 0)
+    .map(p => row(site, h2hSlug(p), h2hName(p), `${bundleCounts.get(h2hSlug(p))} games`))
     .join('\n');
 
   const teamRows = live.map(t =>
@@ -129,6 +134,14 @@ ${teamRows}
     <p>Not every game — only the days worth clearing your evening for: two of your teams playing each other, a cup tie, or three-plus games stacked on one day. They arrive as <b>all-day banners</b>, so give this calendar its own colour and key days light up.</p>
     <div class="rows">
 ${alertCount ? row(site, 'alerts', '🔥 Sports Days', `${alertCount} days flagged`) : ''}
+    </div>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">5</span> Only when your teams meet</h2>
+    <p>Deliberately sparse — <b>nothing but the games where two teams you follow face each other.</b> A handful of dates a year. Good as a second calendar alongside anything above; these fixtures are already included in the bundles, so this one is for people who want them called out separately.</p>
+    <div class="rows">
+${h2hRows}
     </div>
   </div>
 
