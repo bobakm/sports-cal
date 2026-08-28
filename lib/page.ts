@@ -88,6 +88,14 @@ export function renderIndex(
          text-decoration:none; white-space:nowrap; }
   .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
   .btn:hover { opacity:.85; }
+  .key { border:1px solid var(--line); border-radius:12px; padding:1rem 1.15rem; margin:0 0 1.75rem; }
+  .key h3 { font-size:.78rem; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);
+            margin:0 0 .6rem; font-weight:600; }
+  .key ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:.4rem; }
+  .key li { font-size:.92rem; color:var(--dim); }
+  .key li b { color:var(--fg); margin-right:.25rem; }
+  .key > p { font-size:.86rem; color:var(--dim); margin:.75rem 0 0; padding-top:.6rem;
+             border-top:1px solid var(--line); }
   .pick { background:var(--card); border:1px solid var(--line); border-radius:9px;
           padding:.7rem .9rem; font-size:.9rem; color:var(--dim); margin:0 0 2rem; }
   .pick b { color:var(--fg); }
@@ -105,6 +113,16 @@ export function renderIndex(
   <p class="lede">Tap once and the games show up in your own calendar app — and keep updating themselves. You never have to come back here.</p>
 
   <p class="pick"><b>Which button?</b> Go by the app you actually open, not the phone you own. If you use the <b>Google Calendar app on an iPhone</b>, you want <b>Google Calendar</b> — and you'll need a computer for it, just once.</p>
+
+  <div class="key">
+    <h3>What the symbols mean</h3>
+    <ul>
+      <li><b>🔥</b> Two teams from this list playing <em>each other</em>.</li>
+      <li><b>⭐</b> A big one — cup tie, knockout, tournament, ranked college matchup, or a heavyweight opponent.</li>
+      <li><b>⚽ 🏒 🏈 ⚾ 🌍</b> The sport, so these sort together in your calendar sidebar.</li>
+    </ul>
+    <p>Finished games show the score in the title. Everything is in your own timezone.</p>
+  </div>
 
   <div class="step">
     <h2><span class="num">1</span> Everything in one calendar</h2>
