@@ -1,0 +1,101 @@
+import type { Team, Source } from './teams.ts';
+
+const BASE = 'https://site.api.espn.com/apis/site/v2/sports';
+
+// ESPN 403s bare programmatic clients; a browser UA gets through.
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+  'Accept': 'application/json',
+};
+
+/** How far back to keep completed games. Past results are nice to have on the
+ *  calendar, but the whole season for 20 teams is a lot of VEVENTs. */
+export const KEEP_PAST_DAYS = 30;
+
+export type Fixture = {
+  id: string;              // ESPN event id — the basis of our stable UID
+  start: Date;
+  title: string;           // "Astros v Rangers"
+  opponent: string;
+  homeAway: 'home' | 'away' | 'neutral';
+  venue?: string;
+  broadcasts: string[];
+  competition: string;     // league slug it came from
+  completed: boolean;
+};
+
+async function getJSON(url: string): Promise<any | null> {
+  try {
+    const r = await fetch(url, { headers: HEADERS });
+    if (!r.ok) { console.warn(`  ! ${r.status} ${url}`); return null; }
+    return await r.json();
+  } catch (e) {
+    console.warn(`  ! ${(e as Error).message} ${url}`);
+    return null;
+  }
+}
+
+/** Fetch one source. ESPN returns *completed* games bare and *upcoming* ones
+ *  only under ?fixture=true — they are disjoint sets, not subset/superset, so
+ *  both calls are required. Missing this yields a calendar with one event in it. */
+async function fetchSource(src: Source): Promise<Fixture[]> {
+  const url = `${BASE}/${src.sport}/${src.league}/teams/${src.teamId}/schedule`;
+  const [past, upcoming] = await Promise.all([getJSON(url), getJSON(`${url}?fixture=true`)]);
+
+  const byId = new Map<string, Fixture>();
+  for (const data of [past, upcoming]) {
+    if (!data) continue;
+    const selfId = String(data?.team?.id ?? '');
+    for (const ev of (data.events ?? [])) {
+      const f = parseEvent(ev, selfId, src.league);
+      if (f) byId.set(f.id, f);   // upcoming wins on collision — fresher
+    }
+  }
+  return [...byId.values()];
+}
+
+function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
+  const comp = (ev.competitions ?? [])[0];
+  if (!ev?.id || !ev?.date || !comp) return null;
+
+  const start = new Date(ev.date);
+  if (isNaN(start.getTime())) return null;
+
+  const competitors = comp.competitors ?? [];
+  const me = competitors.find((c: any) => String(c?.team?.id) === selfId);
+  const them = competitors.find((c: any) => String(c?.team?.id) !== selfId);
+
+  const broadcasts: string[] = [];
+  for (const b of (comp.broadcasts ?? [])) {
+    const n = b?.media?.shortName;
+    if (n && !broadcasts.includes(n)) broadcasts.push(n);
+  }
+
+  const homeAway = comp.neutralSite ? 'neutral' : (me?.homeAway ?? 'home');
+  const opponent = them?.team?.shortDisplayName ?? them?.team?.displayName ?? 'TBD';
+
+  return {
+    id: String(ev.id),
+    start,
+    title: ev.shortName ?? ev.name ?? 'Game',
+    opponent,
+    homeAway: homeAway as Fixture['homeAway'],
+    venue: comp?.venue?.fullName,
+    broadcasts,
+    competition: league,
+    completed: Boolean(comp?.status?.type?.completed) || start.getTime() < Date.now(),
+  };
+}
+
+export async function fetchTeamFixtures(team: Team): Promise<Fixture[]> {
+  const batches = await Promise.all(team.sources.map(fetchSource));
+  const cutoff = Date.now() - KEEP_PAST_DAYS * 86_400_000;
+
+  // Dedupe across sources by ESPN event id: a national team's fixture can be
+  // returned by more than one competition endpoint.
+  const byId = new Map<string, Fixture>();
+  for (const f of batches.flat()) {
+    if (f.start.getTime() >= cutoff) byId.set(f.id, f);
+  }
+  return [...byId.values()].sort((a, b) => a.start.getTime() - b.start.getTime());
+}

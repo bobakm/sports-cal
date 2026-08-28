@@ -1,0 +1,22 @@
+{
+  "name": "sports-calendar",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "serve": "tsx scripts/serve.ts",
+    "gen": "tsx scripts/gen.ts",
+    "qr": "tsx scripts/qr.ts",
+    "probe": "python3 probe/espn_probe.py"
+  },
+  "dependencies": {
+    "@types/qrcode": "^1.5.6",
+    "ical-generator": "^8.0.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
