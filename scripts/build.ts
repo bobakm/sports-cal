@@ -50,9 +50,12 @@ console.log(`\n${headToHead.size} head-to-head fixtures between your teams`);
 
 console.log('\nfeeds:');
 for (const team of TEAMS) {
-  const f = fixtures.get(team.slug);
-  if (!f?.length) { console.log(`  skip ${team.slug} (no fixtures)`); continue; }
+  // fixtures.has() means the fetch succeeded; an empty array is a legitimate
+  // "nothing scheduled yet" and still deserves a feed people can subscribe to.
+  if (!fixtures.has(team.slug)) { console.log(`  skip ${team.slug} (fetch failed)`); continue; }
+  const f = fixtures.get(team.slug)!;
   write(`feed/${team.slug}.ics`, buildFeed(team, f, headToHead));
+  if (!f.length) console.log(`    (${team.slug} has no fixtures scheduled yet)`);
 }
 
 const bundleCounts = new Map<string, number>();
@@ -89,7 +92,9 @@ for (const c of clusters) {
 console.log(`  ${clusters.length} cluster days flagged:`);
 for (const [k, n] of byKind) console.log(`    ${k}: ${n}`);
 
-const counts = new Map(TEAMS.map(t => [t.slug, (fixtures.get(t.slug) ?? []).length]));
+// Only teams whose fetch succeeded appear on the page.
+const counts = new Map(TEAMS.filter(t => fixtures.has(t.slug))
+  .map(t => [t.slug, fixtures.get(t.slug)!.length]));
 writeFileSync('site/index.html', renderIndex(SITE, TEAMS, PRESETS, counts, bundleCounts, marquee.length, local.length));
 writeFileSync('site/.nojekyll', '');
 console.log(`\nbuilt for https://${SITE}  (${failures} fetch failures)`);

@@ -128,7 +128,7 @@ function parseEvent(ev: any, selfId: string, league: string): Fixture | null {
 export async function fetchTeamFixtures(team: Team): Promise<Fixture[]> {
   const batches: Fixture[][] = [];
   for (const src of team.sources) batches.push(await fetchSource(src));
-  const cutoff = Date.now() - KEEP_PAST_DAYS * 86_400_000;
+  const cutoff = team.upcomingOnly ? Date.now() : Date.now() - KEEP_PAST_DAYS * 86_400_000;
 
   // Dedupe across sources by ESPN event id: a national team's fixture can be
   // returned by more than one competition endpoint.

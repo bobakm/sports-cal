@@ -43,7 +43,8 @@ for (const file of files) {
   if (!comp.getFirstPropertyValue('prodid')) note(file, 'missing PRODID');
 
   const events = comp.getAllSubcomponents('vevent');
-  if (!events.length) note(file, 'contains no events');
+  // An empty calendar is valid: a team can genuinely have nothing scheduled.
+  if (!events.length) console.log(`  \u2139\ufe0f  ${file} has no events (nothing scheduled)`);
 
   const uids = new Set<string>();
   for (const ev of events) {

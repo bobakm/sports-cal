@@ -15,6 +15,11 @@ export type Team = {
    *  is its own streaming deal. Real broadcast data always wins over this. */
   defaultBroadcast?: string;
   durationMin: number;
+  /** Skip finished games entirely for this team, regardless of the usual
+   *  history window. Set where old results would be noise rather than context
+   *  — e.g. a team added mid-cycle whose last matches were a finished
+   *  tournament. */
+  upcomingOnly?: boolean;
 };
 
 const MLB = (slug: string, name: string, short: string, id: string): Team => ({
@@ -52,9 +57,13 @@ const EPL = (slug: string, name: string, short: string, id: string): Team => ({
 
 /** National teams need every competition they might appear in. Miss one and
  *  those fixtures are simply absent — no endpoint returns them all. */
-const NATIONAL = (slug: string, name: string, short: string, id: string, leagues: string[]): Team => ({
+const NATIONAL = (
+  slug: string, name: string, short: string, id: string, leagues: string[],
+  opts: { upcomingOnly?: boolean } = {},
+): Team => ({
   slug, name, short, category: 'NATIONAL', durationMin: 120,
   sources: leagues.map(league => ({ sport: 'soccer', league, teamId: id })),
+  ...opts,
 });
 
 const UEFA_NAT = ['fifa.world', 'fifa.friendly', 'uefa.nations', 'fifa.worldq.uefa', 'uefa.euroq'];
@@ -87,7 +96,8 @@ export const TEAMS: Team[] = [
   NATIONAL('iran',        'Iran National',        'IRN', '469',
     ['afc.asian.cup', 'fifa.friendly', 'fifa.worldq.afc', 'fifa.world']),
   NATIONAL('morocco',     'Morocco National',     'MAR', '2869',
-    ['caf.nations', 'caf.nations_qual', 'fifa.friendly', 'fifa.worldq.caf', 'fifa.world']),
+    ['caf.nations', 'caf.nations_qual', 'fifa.friendly', 'fifa.worldq.caf', 'fifa.world'],
+    { upcomingOnly: true }),
   NATIONAL('belgium',     'Belgium National',     'BEL', '459', UEFA_NAT),
   NATIONAL('england',     'England National',     'ENG', '448', UEFA_NAT),
   NATIONAL('italy',       'Italy National',       'ITA', '162', UEFA_NAT),

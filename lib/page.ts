@@ -29,7 +29,7 @@ export function renderIndex(
   // Grouped by sport (so the icons cluster), alphabetical inside each group.
   const CATEGORY_ORDER: Team['category'][] = ['EPL', 'NHL', 'NCAAF', 'MLB', 'NATIONAL'];
   const live = teams
-    .filter(t => (counts.get(t.slug) ?? 0) > 0)
+    .filter(t => counts.has(t.slug))
     .sort((a, b) =>
       CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category)
       || a.name.localeCompare(b.name));
@@ -63,8 +63,11 @@ export function renderIndex(
     .map(p => row(site, h2hSlug(p), h2hName(p), `${bundleCounts.get(h2hSlug(p))} games`))
     .join('\n');
 
-  const teamRows = live.map(t =>
-    row(site, t.slug, `${ICON[t.category]} ${t.name}`, `${counts.get(t.slug)} games`)).join('\n');
+  const teamRows = live.map(t => {
+    const n = counts.get(t.slug) ?? 0;
+    return row(site, t.slug, `${ICON[t.category]} ${t.name}`,
+               n ? `${n} games` : 'nothing scheduled yet — subscribe now and games appear when announced');
+  }).join('\n');
 
   return `<!doctype html>
 <html lang="en">
